@@ -9,7 +9,7 @@ import {
     getCurrentTime, formatDate, getGoogleMapsLink, generateUniqueId,
     MapIcon, EditIcon, TimeIcon, WalletIcon, DeleteIcon, DragIcon, UserIcon, PlusIcon,
     CurrencyIcon, PlaneIcon, MoneyIcon, CalendarIcon, DownloadIcon, ShoppingIcon, PackageIcon,
-    LoadingSpinner, Modal
+    SettingsIcon, LoadingSpinner, Modal
 } from './UtilsAndComponents';
 
 import { initialTripData, initialSettings } from './initialData';
@@ -109,17 +109,27 @@ const DaySelector = ({ days, selectedDayIndex, onSelectDay }) => {
                         const dateStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
                         const isSelected = selectedDayIndex === day.index;
 
+                        // Get main location from activities
+                        const mainLocation = day.activities && day.activities.length > 0
+                            ? day.activities.find(a => a.type === 'sightseeing' || a.type === 'accommodation')?.location?.split(',')[0]?.split(' ')[0] || day.city || ''
+                            : day.city || '';
+
                         return (
                             <button
                                 key={day.index}
                                 onClick={() => onSelectDay(day.index)}
-                                className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap flex flex-col items-center min-w-[90px] active:scale-95 ${isSelected
+                                className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap flex flex-col items-center min-w-[110px] active:scale-95 ${isSelected
                                     ? `${Colors.BTN_PRIMARY} shadow-xl`
                                     : `${Colors.BTN_INACTIVE} hover:scale-105`
                                     }`}
                             >
                                 <div className="font-bold text-base mb-0.5">Day {day.index + 1}</div>
                                 <div className={`text-xs ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>{dateStr}</div>
+                                {mainLocation && (
+                                    <div className={`text-xs mt-0.5 ${isSelected ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        {mainLocation.length > 10 ? mainLocation.slice(0, 10) + '...' : mainLocation}
+                                    </div>
+                                )}
                             </button>
                         );
                     })}
@@ -246,7 +256,10 @@ const ActivityCard = ({ activity, dayIndex, onEdit, onDelete, onAddExpense, prov
                                 <span className={`text-xs font-semibold ${Colors.TEXT_MUTED}`}>花費記錄</span>
                                 <div className="flex gap-2">
                                     {Object.entries(totalExpenses).map(([currency, total]) => (
-                                        <span key={currency} className={`text-sm font-bold ${Colors.TEXT_PRIMARY}`}>
+                                        <span key={currency} className={`text-sm font-bold ${currency === 'EUR' ? 'text-emerald-400' :
+                                            currency === 'TWD' ? 'text-blue-400' :
+                                                Colors.TEXT_PRIMARY
+                                            }`}>
                                             {total.toFixed(currency === 'TWD' ? 0 : 2)} {currency}
                                         </span>
                                     ))}
@@ -256,7 +269,10 @@ const ActivityCard = ({ activity, dayIndex, onEdit, onDelete, onAddExpense, prov
                                 {activity.expenses.map(exp => (
                                     <div key={exp.id} className="flex justify-between text-xs">
                                         <span className={Colors.TEXT_SECONDARY}>{exp.description}</span>
-                                        <span className={Colors.TEXT_PRIMARY}>{exp.amount} {exp.currency}</span>
+                                        <span className={`font-semibold ${exp.currency === 'EUR' ? 'text-emerald-400' :
+                                            exp.currency === 'TWD' ? 'text-blue-400' :
+                                                Colors.TEXT_PRIMARY
+                                            }`}>{exp.amount} {exp.currency}</span>
                                     </div>
                                 ))}
                             </div>
@@ -336,7 +352,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, familyMembers = [], cu
                             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
                         >
                             {currencies.map(c => (
-                                <option key={c.code} value={c.code}>{c.code}</option>
+                                <option key={c.code} value={c.code} className="text-slate-900 bg-white">{c.code}</option>
                             ))}
                         </select>
                     </div>
@@ -359,7 +375,6 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, familyMembers = [], cu
                         type="text"
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        required
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
                     />
                 </div>
@@ -373,7 +388,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, familyMembers = [], cu
                             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
                         >
                             {familyMembers.map(m => (
-                                <option key={m} value={m}>{m}</option>
+                                <option key={m} value={m} className="text-slate-900 bg-white">{m}</option>
                             ))}
                         </select>
                     </div>
@@ -385,7 +400,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, familyMembers = [], cu
                             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
                         >
                             {categories.map(c => (
-                                <option key={c} value={c}>{c}</option>
+                                <option key={c} value={c} className="text-slate-900 bg-white">{c}</option>
                             ))}
                         </select>
                     </div>
@@ -606,7 +621,7 @@ const CategoryEditModal = ({ isOpen, onClose, onSave, category, items }) => {
 };
 
 // --- SHOPPING MODAL ---
-const ShoppingModal = ({ isOpen, onClose, onSave, familyMembers = [] }) => {
+const ShoppingModal = ({ isOpen, onClose, onSave, item, familyMembers = [] }) => {
     const [formData, setFormData] = useState({
         item: '',
         assignedTo: familyMembers[0] || '',
@@ -615,14 +630,29 @@ const ShoppingModal = ({ isOpen, onClose, onSave, familyMembers = [] }) => {
         note: ''
     });
 
+    useEffect(() => {
+        if (item) {
+            setFormData(item);
+        } else {
+            setFormData({
+                item: '',
+                assignedTo: familyMembers[0] || '',
+                quantity: '1',
+                location: '',
+                note: ''
+            });
+        }
+    }, [item, familyMembers]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave(formData);
         setFormData({ item: '', assignedTo: familyMembers[0] || '', quantity: '1', location: '', note: '' });
+        onClose();
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="新增購物項目">
+        <Modal isOpen={isOpen} onClose={onClose} title={item ? "編輯購物項目" : "新增購物項目"}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className={`text-sm font-medium ${Colors.TEXT_PRIMARY} block mb-1`}>商品名稱</label>
@@ -645,7 +675,7 @@ const ShoppingModal = ({ isOpen, onClose, onSave, familyMembers = [] }) => {
                             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
                         >
                             {familyMembers.map(m => (
-                                <option key={m} value={m} className="text-slate-800">{m}</option>
+                                <option key={m} value={m} className="text-slate-900 bg-white">{m}</option>
                             ))}
                         </select>
                     </div>
@@ -683,7 +713,7 @@ const ShoppingModal = ({ isOpen, onClose, onSave, familyMembers = [] }) => {
                 </div>
 
                 <button type="submit" className={`w-full py-3 rounded-lg ${Colors.BTN_ACCENT}`}>
-                    新增項目
+                    {item ? "更新" : "新增項目"}
                 </button>
             </form>
         </Modal>
@@ -746,7 +776,7 @@ const PackingModal = ({ isOpen, onClose, onSave, existingCategories }) => {
                                 className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
                             >
                                 {existingCategories.map(c => (
-                                    <option key={c} value={c} className="text-slate-800">{c}</option>
+                                    <option key={c} value={c} className="text-slate-900 bg-white">{c}</option>
                                 ))}
                             </select>
                         )}
@@ -872,7 +902,10 @@ const FinancePage = ({ tripData, settings, onAddIndependentExpense, onEditExpens
                 <div className="grid grid-cols-2 gap-3">
                     {Object.entries(totalsByCurrency).map(([currency, total]) => (
                         <div key={currency} className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-lg p-3 text-center`}>
-                            <div className={`text-2xl font-bold ${Colors.TEXT_PRIMARY}`}>
+                            <div className={`text-2xl font-bold ${currency === 'EUR' ? 'text-emerald-400' :
+                                currency === 'TWD' ? 'text-blue-400' :
+                                    Colors.TEXT_PRIMARY
+                                }`}>
                                 {total.toFixed(currency === 'TWD' ? 0 : 2)}
                             </div>
                             <div className={`text-sm ${Colors.TEXT_MUTED}`}>{currency}</div>
@@ -925,7 +958,10 @@ const FinancePage = ({ tripData, settings, onAddIndependentExpense, onEditExpens
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className={`font-bold ${Colors.TEXT_PRIMARY} text-lg`}>
+                                    <div className={`font-bold text-lg ${exp.currency === 'EUR' ? 'text-emerald-400' :
+                                        exp.currency === 'TWD' ? 'text-blue-400' :
+                                            Colors.TEXT_PRIMARY
+                                        }`}>
                                         {exp.amount} {exp.currency}
                                     </div>
                                     <button onClick={() => onEditExpense(exp)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST}`}>
@@ -945,7 +981,7 @@ const FinancePage = ({ tripData, settings, onAddIndependentExpense, onEditExpens
 };
 
 // --- SHOPPING PAGE ---
-const ShoppingPage = ({ shoppingList, onTogglePurchased, onAddItem, onDeleteItem }) => {
+const ShoppingPage = ({ shoppingList, onTogglePurchased, onAddItem, onEditItem, onDeleteItem }) => {
     const total = shoppingList.length;
     const purchased = shoppingList.filter(i => i.purchased).length;
 
@@ -981,6 +1017,9 @@ const ShoppingPage = ({ shoppingList, onTogglePurchased, onAddItem, onDeleteItem
                                 </div>
                                 {item.note && <div className={`text-xs ${Colors.TEXT_SECONDARY} mt-1`}>備註: {item.note}</div>}
                             </div>
+                            <button onClick={() => onEditItem(item)} className={`p-2 rounded-lg ${Colors.BTN_GHOST}`}>
+                                <EditIcon className="w-4 h-4" />
+                            </button>
                             <button onClick={() => onDeleteItem(item.id)} className={`p-2 rounded-lg ${Colors.BTN_GHOST} text-rose-500 hover:bg-rose-500/10`}>
                                 <DeleteIcon className="w-4 h-4" />
                             </button>
@@ -1054,6 +1093,202 @@ const PackingPage = ({ packingList, onTogglePacked, onAddItem, onDeleteItem, onO
     );
 };
 
+// --- SETTINGS PAGE ---
+const SettingsPage = ({ settings, onUpdateSettings }) => {
+    const [editingSection, setEditingSection] = useState(null);
+    const [newItem, setNewItem] = useState('');
+    const [newCurrencyCode, setNewCurrencyCode] = useState('');
+    const [newCurrencyName, setNewCurrencyName] = useState('');
+
+    const handleAddMember = () => {
+        if (!newItem.trim()) return;
+        const updated = { ...settings, familyMembers: [...settings.familyMembers, newItem.trim()] };
+        onUpdateSettings(updated);
+        setNewItem('');
+        setEditingSection(null);
+    };
+
+    const handleDeleteMember = (member) => {
+        if (!window.confirm(`確定要刪除「${member}」嗎？`)) return;
+        const updated = { ...settings, familyMembers: settings.familyMembers.filter(m => m !== member) };
+        onUpdateSettings(updated);
+    };
+
+    const handleAddCategory = () => {
+        if (!newItem.trim()) return;
+        const updated = { ...settings, categories: [...settings.categories, newItem.trim()] };
+        onUpdateSettings(updated);
+        setNewItem('');
+        setEditingSection(null);
+    };
+
+    const handleDeleteCategory = (category) => {
+        if (!window.confirm(`確定要刪除「${category}」類別嗎？`)) return;
+        const updated = { ...settings, categories: settings.categories.filter(c => c !== category) };
+        onUpdateSettings(updated);
+    };
+
+    const handleAddCurrency = () => {
+        if (!newCurrencyCode.trim() || !newCurrencyName.trim()) return;
+        const updated = {
+            ...settings,
+            currencies: [...settings.currencies, { code: newCurrencyCode.trim().toUpperCase(), name: newCurrencyName.trim() }]
+        };
+        onUpdateSettings(updated);
+        setNewCurrencyCode('');
+        setNewCurrencyName('');
+        setEditingSection(null);
+    };
+
+    const handleDeleteCurrency = (code) => {
+        if (!window.confirm(`確定要刪除「${code}」幣別嗎？`)) return;
+        const updated = { ...settings, currencies: settings.currencies.filter(c => c.code !== code) };
+        onUpdateSettings(updated);
+    };
+
+    return (
+        <div className="p-4 space-y-4 pb-24">
+            <h2 className={`text-2xl font-bold ${Colors.TEXT_PRIMARY} mb-4`}>設定</h2>
+
+            {/* Family Members */}
+            <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4 ${Colors.GLASS_SHADOW}`}>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className={`text-lg font-bold ${Colors.TEXT_PRIMARY} flex items-center gap-2`}>
+                        <UserIcon className="w-5 h-5" /> 家庭成員
+                    </h3>
+                    <button
+                        onClick={() => setEditingSection(editingSection === 'members' ? null : 'members')}
+                        className={`px-3 py-1.5 rounded-lg ${Colors.BTN_ACCENT} text-sm`}
+                    >
+                        <PlusIcon className="w-4 h-4 inline mr-1" /> 新增
+                    </button>
+                </div>
+
+                {editingSection === 'members' && (
+                    <div className="mb-3 flex gap-2">
+                        <input
+                            type="text"
+                            value={newItem}
+                            onChange={(e) => setNewItem(e.target.value)}
+                            placeholder="例如: 爸爸"
+                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddMember()}
+                        />
+                        <button onClick={handleAddMember} className={`px-4 py-2 rounded-lg ${Colors.BTN_ACCENT}`}>
+                            新增
+                        </button>
+                    </div>
+                )}
+
+                <div className="space-y-2">
+                    {settings.familyMembers.map(member => (
+                        <div key={member} className={`flex items-center justify-between p-3 rounded-lg ${Colors.GLASS_BG} ${Colors.GLASS_BORDER}`}>
+                            <span className={Colors.TEXT_PRIMARY}>{member}</span>
+                            <button onClick={() => handleDeleteMember(member)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
+                                <DeleteIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Expense Categories */}
+            <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4 ${Colors.GLASS_SHADOW}`}>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className={`text-lg font-bold ${Colors.TEXT_PRIMARY} flex items-center gap-2`}>
+                        <WalletIcon className="w-5 h-5" /> 花費類別
+                    </h3>
+                    <button
+                        onClick={() => setEditingSection(editingSection === 'categories' ? null : 'categories')}
+                        className={`px-3 py-1.5 rounded-lg ${Colors.BTN_ACCENT} text-sm`}
+                    >
+                        <PlusIcon className="w-4 h-4 inline mr-1" /> 新增
+                    </button>
+                </div>
+
+                {editingSection === 'categories' && (
+                    <div className="mb-3 flex gap-2">
+                        <input
+                            type="text"
+                            value={newItem}
+                            onChange={(e) => setNewItem(e.target.value)}
+                            placeholder="例如: 紀念品"
+                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
+                            onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
+                        />
+                        <button onClick={handleAddCategory} className={`px-4 py-2 rounded-lg ${Colors.BTN_ACCENT}`}>
+                            新增
+                        </button>
+                    </div>
+                )}
+
+                <div className="space-y-2">
+                    {settings.categories.map(category => (
+                        <div key={category} className={`flex items-center justify-between p-3 rounded-lg ${Colors.GLASS_BG} ${Colors.GLASS_BORDER}`}>
+                            <span className={Colors.TEXT_PRIMARY}>{category}</span>
+                            <button onClick={() => handleDeleteCategory(category)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
+                                <DeleteIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Currencies */}
+            <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4 ${Colors.GLASS_SHADOW}`}>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className={`text-lg font-bold ${Colors.TEXT_PRIMARY} flex items-center gap-2`}>
+                        <CurrencyIcon className="w-5 h-5" /> 幣別設定
+                    </h3>
+                    <button
+                        onClick={() => setEditingSection(editingSection === 'currencies' ? null : 'currencies')}
+                        className={`px-3 py-1.5 rounded-lg ${Colors.BTN_ACCENT} text-sm`}
+                    >
+                        <PlusIcon className="w-4 h-4 inline mr-1" /> 新增
+                    </button>
+                </div>
+
+                {editingSection === 'currencies' && (
+                    <div className="mb-3 space-y-2">
+                        <input
+                            type="text"
+                            value={newCurrencyCode}
+                            onChange={(e) => setNewCurrencyCode(e.target.value.toUpperCase())}
+                            placeholder="幣別代碼 (例如: USD)"
+                            maxLength={3}
+                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
+                        />
+                        <input
+                            type="text"
+                            value={newCurrencyName}
+                            onChange={(e) => setNewCurrencyName(e.target.value)}
+                            placeholder="幣別名稱 (例如: 美元)"
+                            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500"
+                        />
+                        <button onClick={handleAddCurrency} className={`w-full py-2 rounded-lg ${Colors.BTN_ACCENT}`}>
+                            新增幣別
+                        </button>
+                    </div>
+                )}
+
+                <div className="space-y-2">
+                    {settings.currencies.map(currency => (
+                        <div key={currency.code} className={`flex items-center justify-between p-3 rounded-lg ${Colors.GLASS_BG} ${Colors.GLASS_BORDER}`}>
+                            <div>
+                                <span className={`${Colors.TEXT_PRIMARY} font-semibold`}>{currency.code}</span>
+                                <span className={`${Colors.TEXT_SECONDARY} text-sm ml-2`}>({currency.name})</span>
+                            </div>
+                            <button onClick={() => handleDeleteCurrency(currency.code)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
+                                <DeleteIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- MAIN APP ---
 const App = () => {
     // 從 localStorage 讀取或使用初始數據
@@ -1077,6 +1312,7 @@ const App = () => {
     const [currentEditingCategory, setCurrentEditingCategory] = useState(null);
     const [currentExpense, setCurrentExpense] = useState(null);
     const [currentActivityId, setCurrentActivityId] = useState(null);
+    const [currentShoppingItem, setCurrentShoppingItem] = useState(null);
     const [isIndependentExpense, setIsIndependentExpense] = useState(false);
 
     const dataRef = firebaseEnabled ? doc(db, 'trips', 'vienna-2026') : null;
@@ -1215,7 +1451,12 @@ const App = () => {
             saveData({ ...tripData, independentExpenses });
         } else {
             const newDays = tripData.days.map(day => {
-                if (day.index === selectedDayIndex) {
+                // Find the day that contains the expense we're editing
+                const dayContainsExpense = day.activities.some(act =>
+                    act.expenses?.some(e => e.id === expenseData.id)
+                );
+
+                if (day.index === selectedDayIndex || dayContainsExpense) {
                     return {
                         ...day,
                         activities: day.activities.map(act => {
@@ -1272,16 +1513,31 @@ const App = () => {
 
 
     const handleAddShoppingItem = useCallback(() => {
+        setCurrentShoppingItem(null);
+        setShoppingModalOpen(true);
+    }, []);
+
+    const handleEditShoppingItem = useCallback((item) => {
+        setCurrentShoppingItem(item);
         setShoppingModalOpen(true);
     }, []);
 
     const handleSaveShoppingItem = useCallback((itemData) => {
-        const newItem = {
-            id: generateUniqueId(),
-            ...itemData,
-            purchased: false
-        };
-        saveData({ ...tripData, shoppingList: [...(tripData.shoppingList || []), newItem] });
+        if (itemData.id) {
+            // Edit existing item
+            const newShoppingList = (tripData.shoppingList || []).map(item =>
+                item.id === itemData.id ? itemData : item
+            );
+            saveData({ ...tripData, shoppingList: newShoppingList });
+        } else {
+            // Add new item
+            const newItem = {
+                id: generateUniqueId(),
+                ...itemData,
+                purchased: false
+            };
+            saveData({ ...tripData, shoppingList: [...(tripData.shoppingList || []), newItem] });
+        }
         setShoppingModalOpen(false);
     }, [tripData, saveData]);
 
@@ -1337,7 +1593,25 @@ const App = () => {
         saveData({ ...tripData, packingList: newPackingList });
     }, [tripData, saveData]);
 
-    const selectedDay = tripData.days.find(d => d.index === selectedDayIndex);
+    const handleUpdateSettings = useCallback((newSettings) => {
+        setSettings(newSettings);
+        localStorage.setItem('settings_v3', JSON.stringify(newSettings));
+    }, []);
+
+    const selectedDay = useMemo(() => {
+        const day = tripData.days.find(d => d.index === selectedDayIndex);
+        if (!day) return null;
+
+        // Sort activities by time
+        const sortedActivities = [...day.activities].sort((a, b) => {
+            const timeA = a.time || '00:00';
+            const timeB = b.time || '00:00';
+            return timeA.localeCompare(timeB);
+        });
+
+        return { ...day, activities: sortedActivities };
+    }, [tripData.days, selectedDayIndex]);
+
     const dailyExpenses = useMemo(() => {
         if (!selectedDay) return {};
         const totals = {};
@@ -1374,6 +1648,7 @@ const App = () => {
                     shoppingList={tripData.shoppingList || []}
                     onTogglePurchased={handleToggleShoppingPurchased}
                     onAddItem={handleAddShoppingItem}
+                    onEditItem={handleEditShoppingItem}
                     onDeleteItem={handleDeleteShoppingItem}
                 />;
             case 'packing':
@@ -1385,6 +1660,11 @@ const App = () => {
                     onOpenCategoryEdit={handleEditCategory}
                     onDeleteCategory={handleDeleteCategory}
                 />;
+            case 'settings':
+                return <SettingsPage
+                    settings={settings}
+                    onUpdateSettings={handleUpdateSettings}
+                />;
             default:
                 return (
                     <>
@@ -1394,14 +1674,22 @@ const App = () => {
                             <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4 mb-4 ${Colors.GLASS_SHADOW}`}>
                                 <div className="flex items-center justify-between">
                                     <h2 className={`text-lg font-bold ${Colors.TEXT_PRIMARY}`}>
-                                        Day {selectedDay?.index} - {selectedDay?.city}
+                                        {selectedDay?.date ? formatDate(selectedDay.date) : ''}
+                                        {selectedDay?.activities && selectedDay.activities.length > 0 && (
+                                            <span className={`text-base font-normal ${Colors.TEXT_SECONDARY} ml-2`}>
+                                                • {selectedDay.activities.find(a => a.type === 'sightseeing' || a.type === 'accommodation')?.location?.split(',')[0] || selectedDay.city || ''}
+                                            </span>
+                                        )}
                                     </h2>
                                     <div className="flex items-center gap-3">
                                         <div className="flex gap-3">
                                             {Object.entries(dailyExpenses).map(([currency, total]) => (
                                                 <div key={currency} className="text-right">
                                                     <div className={`text-xs ${Colors.TEXT_MUTED}`}>{currency}</div>
-                                                    <div className={`text-lg font-bold ${Colors.TEXT_PRIMARY}`}>
+                                                    <div className={`text-lg font-bold ${currency === 'EUR' ? 'text-emerald-400' :
+                                                        currency === 'TWD' ? 'text-blue-400' :
+                                                            Colors.TEXT_PRIMARY
+                                                        }`}>
                                                         {total.toFixed(currency === 'TWD' ? 0 : 2)}
                                                     </div>
                                                 </div>
@@ -1452,6 +1740,7 @@ const App = () => {
         { id: 'finance', name: '財務', icon: MoneyIcon },
         { id: 'shopping', name: '購物', icon: ShoppingIcon },
         { id: 'packing', name: '準備', icon: PackageIcon },
+        { id: 'settings', name: '設定', icon: SettingsIcon },
     ];
 
     return (
@@ -1503,6 +1792,7 @@ const App = () => {
                 isOpen={shoppingModalOpen}
                 onClose={() => setShoppingModalOpen(false)}
                 onSave={handleSaveShoppingItem}
+                item={currentShoppingItem}
                 familyMembers={settings.familyMembers}
             />
 
