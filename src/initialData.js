@@ -509,19 +509,19 @@ export const initialTripData = {
         }
     ],
     shoppingList: [
-        { id: 's1', item: 'Mozart Balls', assignedTo: '媽媽', quantity: 5, purchased: false, location: 'Supermarket', note: 'Buy the Mirabell brand' },
-        { id: 's2', item: 'Swarovski Crystal', assignedTo: '爸爸', quantity: 1, purchased: false, location: 'City Center', note: 'For Grandma' }
+        { id: 's1', item: '莫札特巧克力', assignedTo: '媽媽', quantity: 5, purchased: false, location: '超市', note: '買 Mirabell 牌子的' },
+        { id: 's2', item: '施華洛世奇水晶', assignedTo: '爸爸', quantity: 1, purchased: false, location: '市中心', note: '給奶奶的禮物' }
     ],
     packingList: [
-        { id: 'p1', item: 'Passport', category: 'Documents', packed: false },
-        { id: 'p2', item: 'Flight Tickets', category: 'Documents', packed: false },
-        { id: 'p3', item: 'Chargers', category: 'Electronics', packed: false },
-        { id: 'p4', item: 'Power Bank', category: 'Electronics', packed: false },
-        { id: 'p5', item: 'Toothbrush', category: 'Toiletries', packed: false },
-        { id: 'p6', item: 'Shampoo', category: 'Toiletries', packed: false },
-        { id: 'p7', item: 'Underwear', category: 'Clothes', packed: false },
-        { id: 'p8', item: 'Jacket', category: 'Clothes', packed: false },
-        { id: 'p9', item: 'Socks', category: 'Clothes', packed: false }
+        { id: 'p1', item: '護照', category: '證件', packed: false },
+        { id: 'p2', item: '機票', category: '證件', packed: false },
+        { id: 'p3', item: '充電器', category: '電子產品', packed: false },
+        { id: 'p4', item: '行動電源', category: '電子產品', packed: false },
+        { id: 'p5', item: '牙刷', category: '盥洗用品', packed: false },
+        { id: 'p6', item: '洗髮精', category: '盥洗用品', packed: false },
+        { id: 'p7', item: '內衣褲', category: '衣物', packed: false },
+        { id: 'p8', item: '外套', category: '衣物', packed: false },
+        { id: 'p9', item: '襪子', category: '衣物', packed: false }
     ],
     independentExpenses: []
 };
@@ -531,5 +531,5 @@ export const initialSettings = {
     timezone: "Europe/Vienna",
     currencies: [{ code: 'EUR', name: '歐元' }, { code: 'TWD', name: '新台幣' }],
     familyMembers: ["爸爸", "媽媽", "小孩A", "小孩B"],
-    categories: ["Food", "Ticket", "Transport", "Accommodation", "Insurance", "Others"]
+    categories: ["餐飲", "門票", "交通", "住宿", "保險", "其他"]
 };

@@ -201,7 +201,7 @@ const ActivityCard = ({ activity, dayIndex, onEdit, onDelete, onAddExpense, prov
                     </div>
                     <div className="flex gap-2">
                         <button onClick={handleSave} className={`flex-1 py-2 rounded-lg ${Colors.BTN_ACCENT}`}>
-                            儲存
+                            更新
                         </button>
                         <button onClick={() => setIsEditing(false)} className={`flex-1 py-2 rounded-lg ${Colors.BTN_PRIMARY}`}>
                             取消
