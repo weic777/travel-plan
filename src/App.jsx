@@ -15,24 +15,27 @@ import {
 import { initialTripData, initialSettings } from './initialData';
 
 // Firebase Configuration
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const firebaseConfig = {
+    apiKey: "AIzaSyC8kuPhbcCwDvkyPX2psh48MZkAr4HaSQQ",
+    authDomain: "teavel-plan.firebaseapp.com",
+    projectId: "teavel-plan",
+    storageBucket: "teavel-plan.firebasestorage.app",
+    messagingSenderId: "774661526446",
+    appId: "1:774661526446:web:611723c1a725956bbc2e3f",
+    measurementId: "G-JNHQ7DPDPH"
+};
 
 let db, auth;
 let firebaseEnabled = false;
 
-if (firebaseConfig && firebaseConfig.projectId) {
-    try {
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        firebaseEnabled = true;
-    } catch (error) {
-        console.error("Firebase Initialization Error:", error);
-        firebaseEnabled = false;
-    }
-} else {
+try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    firebaseEnabled = true;
+    console.log("Firebase initialized successfully");
+} catch (error) {
+    console.error("Firebase Initialization Error:", error);
     firebaseEnabled = false;
 }
 
