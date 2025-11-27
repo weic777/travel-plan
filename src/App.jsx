@@ -1103,6 +1103,12 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
     const [newCurrencyCode, setNewCurrencyCode] = useState('');
     const [newCurrencyName, setNewCurrencyName] = useState('');
 
+    // Edit State
+    const [editingItemType, setEditingItemType] = useState(null); // 'member', 'category', 'currency'
+    const [editingOriginalValue, setEditingOriginalValue] = useState(null);
+    const [editValue, setEditValue] = useState('');
+    const [editValue2, setEditValue2] = useState(''); // For currency name
+
     const handleAddMember = () => {
         if (!newItem.trim()) return;
         const updated = { ...settings, familyMembers: [...settings.familyMembers, newItem.trim()] };
@@ -1117,6 +1123,25 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
         onUpdateSettings(updated);
     };
 
+    const handleStartEditMember = (member) => {
+        setEditingItemType('member');
+        setEditingOriginalValue(member);
+        setEditValue(member);
+    };
+
+    const handleSaveEditMember = () => {
+        if (!editValue.trim() || editValue === editingOriginalValue) {
+            setEditingItemType(null);
+            return;
+        }
+        const updated = {
+            ...settings,
+            familyMembers: settings.familyMembers.map(m => m === editingOriginalValue ? editValue.trim() : m)
+        };
+        onUpdateSettings(updated);
+        setEditingItemType(null);
+    };
+
     const handleAddCategory = () => {
         if (!newItem.trim()) return;
         const updated = { ...settings, categories: [...settings.categories, newItem.trim()] };
@@ -1129,6 +1154,25 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
         if (!window.confirm(`確定要刪除「${category}」類別嗎？`)) return;
         const updated = { ...settings, categories: settings.categories.filter(c => c !== category) };
         onUpdateSettings(updated);
+    };
+
+    const handleStartEditCategory = (category) => {
+        setEditingItemType('category');
+        setEditingOriginalValue(category);
+        setEditValue(category);
+    };
+
+    const handleSaveEditCategory = () => {
+        if (!editValue.trim() || editValue === editingOriginalValue) {
+            setEditingItemType(null);
+            return;
+        }
+        const updated = {
+            ...settings,
+            categories: settings.categories.map(c => c === editingOriginalValue ? editValue.trim() : c)
+        };
+        onUpdateSettings(updated);
+        setEditingItemType(null);
     };
 
     const handleAddCurrency = () => {
@@ -1147,6 +1191,26 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
         if (!window.confirm(`確定要刪除「${code}」幣別嗎？`)) return;
         const updated = { ...settings, currencies: settings.currencies.filter(c => c.code !== code) };
         onUpdateSettings(updated);
+    };
+
+    const handleStartEditCurrency = (currency) => {
+        setEditingItemType('currency');
+        setEditingOriginalValue(currency.code);
+        setEditValue(currency.code);
+        setEditValue2(currency.name);
+    };
+
+    const handleSaveEditCurrency = () => {
+        if (!editValue.trim() || !editValue2.trim()) {
+            setEditingItemType(null);
+            return;
+        }
+        const updated = {
+            ...settings,
+            currencies: settings.currencies.map(c => c.code === editingOriginalValue ? { code: editValue.trim().toUpperCase(), name: editValue2.trim() } : c)
+        };
+        onUpdateSettings(updated);
+        setEditingItemType(null);
     };
 
     return (
@@ -1186,10 +1250,30 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
                 <div className="space-y-2">
                     {settings.familyMembers.map(member => (
                         <div key={member} className={`flex items-center justify-between p-3 rounded-lg ${Colors.GLASS_BG} ${Colors.GLASS_BORDER}`}>
-                            <span className={Colors.TEXT_PRIMARY}>{member}</span>
-                            <button onClick={() => handleDeleteMember(member)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
-                                <DeleteIcon className="w-4 h-4" />
-                            </button>
+                            {editingItemType === 'member' && editingOriginalValue === member ? (
+                                <div className="flex-1 flex gap-2 mr-2">
+                                    <input
+                                        type="text"
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        className="flex-1 px-2 py-1 rounded bg-white/10 border border-white/20 text-white"
+                                    />
+                                    <button onClick={handleSaveEditMember} className={`px-3 py-1 rounded ${Colors.BTN_ACCENT} text-xs`}>儲存</button>
+                                    <button onClick={() => setEditingItemType(null)} className={`px-3 py-1 rounded ${Colors.BTN_PRIMARY} text-xs`}>取消</button>
+                                </div>
+                            ) : (
+                                <>
+                                    <span className={Colors.TEXT_PRIMARY}>{member}</span>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleStartEditMember(member)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST}`}>
+                                            <EditIcon className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDeleteMember(member)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
+                                            <DeleteIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -1228,10 +1312,30 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
                 <div className="space-y-2">
                     {settings.categories.map(category => (
                         <div key={category} className={`flex items-center justify-between p-3 rounded-lg ${Colors.GLASS_BG} ${Colors.GLASS_BORDER}`}>
-                            <span className={Colors.TEXT_PRIMARY}>{category}</span>
-                            <button onClick={() => handleDeleteCategory(category)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
-                                <DeleteIcon className="w-4 h-4" />
-                            </button>
+                            {editingItemType === 'category' && editingOriginalValue === category ? (
+                                <div className="flex-1 flex gap-2 mr-2">
+                                    <input
+                                        type="text"
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        className="flex-1 px-2 py-1 rounded bg-white/10 border border-white/20 text-white"
+                                    />
+                                    <button onClick={handleSaveEditCategory} className={`px-3 py-1 rounded ${Colors.BTN_ACCENT} text-xs`}>儲存</button>
+                                    <button onClick={() => setEditingItemType(null)} className={`px-3 py-1 rounded ${Colors.BTN_PRIMARY} text-xs`}>取消</button>
+                                </div>
+                            ) : (
+                                <>
+                                    <span className={Colors.TEXT_PRIMARY}>{category}</span>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleStartEditCategory(category)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST}`}>
+                                            <EditIcon className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDeleteCategory(category)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
+                                            <DeleteIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -1277,13 +1381,40 @@ const SettingsPage = ({ settings, onUpdateSettings }) => {
                 <div className="space-y-2">
                     {settings.currencies.map(currency => (
                         <div key={currency.code} className={`flex items-center justify-between p-3 rounded-lg ${Colors.GLASS_BG} ${Colors.GLASS_BORDER}`}>
-                            <div>
-                                <span className={`${Colors.TEXT_PRIMARY} font-semibold`}>{currency.code}</span>
-                                <span className={`${Colors.TEXT_SECONDARY} text-sm ml-2`}>({currency.name})</span>
-                            </div>
-                            <button onClick={() => handleDeleteCurrency(currency.code)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
-                                <DeleteIcon className="w-4 h-4" />
-                            </button>
+                            {editingItemType === 'currency' && editingOriginalValue === currency.code ? (
+                                <div className="flex-1 flex gap-2 mr-2">
+                                    <input
+                                        type="text"
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value.toUpperCase())}
+                                        maxLength={3}
+                                        className="w-16 px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-center"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={editValue2}
+                                        onChange={(e) => setEditValue2(e.target.value)}
+                                        className="flex-1 px-2 py-1 rounded bg-white/10 border border-white/20 text-white"
+                                    />
+                                    <button onClick={handleSaveEditCurrency} className={`px-3 py-1 rounded ${Colors.BTN_ACCENT} text-xs`}>儲存</button>
+                                    <button onClick={() => setEditingItemType(null)} className={`px-3 py-1 rounded ${Colors.BTN_PRIMARY} text-xs`}>取消</button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div>
+                                        <span className={`${Colors.TEXT_PRIMARY} font-semibold`}>{currency.code}</span>
+                                        <span className={`${Colors.TEXT_SECONDARY} text-sm ml-2`}>({currency.name})</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleStartEditCurrency(currency)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST}`}>
+                                            <EditIcon className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDeleteCurrency(currency.code)} className={`p-1.5 rounded-lg ${Colors.BTN_GHOST} text-rose-500`}>
+                                            <DeleteIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
