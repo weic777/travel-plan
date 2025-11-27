@@ -68,7 +68,7 @@ const DualClock = () => {
 };
 
 // --- FLIGHT HEADER ---
-const FlightHeader = ({ flightInfo }) => {
+const FlightHeader = ({ flightInfo, syncStatus }) => {
     return (
         <div className={`sticky top-0 z-30 ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW}`}>
             <div className="max-w-6xl mx-auto px-4 py-3">
@@ -76,6 +76,11 @@ const FlightHeader = ({ flightInfo }) => {
                     <h1 className={`text-lg font-bold ${Colors.TEXT_PRIMARY} flex items-center gap-2`}>
                         <PlaneIcon className="w-5 h-5" />
                         維也納之旅
+                        {syncStatus && (
+                            <span className={`flex h-2 w-2 rounded-full ${syncStatus === 'connected' ? 'bg-emerald-500' :
+                                    syncStatus === 'error' ? 'bg-rose-500' : 'bg-amber-500'
+                                }`} title={syncStatus === 'connected' ? '已連線' : '連線異常'}></span>
+                        )}
                     </h1>
                     <DualClock />
                 </div>
@@ -1449,12 +1454,16 @@ const App = () => {
     const [currentShoppingItem, setCurrentShoppingItem] = useState(null);
     const [isIndependentExpense, setIsIndependentExpense] = useState(false);
 
+    const [syncStatus, setSyncStatus] = useState('init'); // init, connected, error
+    const [lastSyncTime, setLastSyncTime] = useState(null);
+
     const dataRef = firebaseEnabled ? doc(db, 'trips', 'vienna-2026') : null;
     const settingsRef = firebaseEnabled ? doc(db, 'trips', 'settings-vienna-2026') : null;
 
     useEffect(() => {
         if (!firebaseEnabled) {
             setIsLoading(false);
+            setSyncStatus('error');
             return;
         }
 
@@ -1468,18 +1477,28 @@ const App = () => {
 
         signInAnonymously(auth).catch((error) => {
             console.error("Auth Error:", error);
+            setSyncStatus('error');
         });
 
         // Real-time Listeners
         const unsubscribeTrip = onSnapshot(dataRef, (docSnapshot) => {
+            setSyncStatus('connected');
+            setLastSyncTime(new Date());
             if (docSnapshot.exists()) {
                 console.log("Received remote trip data update");
                 const data = docSnapshot.data();
-                setTripData(data);
+                // Only update if data is different to avoid loops (though React handles this usually)
+                setTripData(prev => {
+                    if (JSON.stringify(prev) !== JSON.stringify(data)) {
+                        return data;
+                    }
+                    return prev;
+                });
                 localStorage.setItem('tripData_v3', JSON.stringify(data));
             }
         }, (error) => {
             console.error("Trip Data Sync Error:", error);
+            setSyncStatus('error');
         });
 
         const unsubscribeSettings = onSnapshot(settingsRef, (docSnapshot) => {
@@ -1491,6 +1510,7 @@ const App = () => {
             }
         }, (error) => {
             console.error("Settings Sync Error:", error);
+            setSyncStatus('error');
         });
 
         setIsLoading(false);
@@ -1927,7 +1947,7 @@ const App = () => {
 
     return (
         <div className={`min-h-screen ${Colors.BG_CANVAS}`}>
-            <FlightHeader flightInfo={tripData.flightInfo} />
+            <FlightHeader flightInfo={tripData.flightInfo} syncStatus={syncStatus} />
 
             {renderContent()}
 
