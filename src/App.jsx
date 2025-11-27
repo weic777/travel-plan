@@ -1450,13 +1450,56 @@ const App = () => {
     const [isIndependentExpense, setIsIndependentExpense] = useState(false);
 
     const dataRef = firebaseEnabled ? doc(db, 'trips', 'vienna-2026') : null;
+    const settingsRef = firebaseEnabled ? doc(db, 'trips', 'settings-vienna-2026') : null;
 
     useEffect(() => {
         if (!firebaseEnabled) {
             setIsLoading(false);
             return;
         }
+
+        // Authentication
+        const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
+            setUser(u);
+            if (u) {
+                console.log("User authenticated:", u.uid);
+            }
+        });
+
+        signInAnonymously(auth).catch((error) => {
+            console.error("Auth Error:", error);
+        });
+
+        // Real-time Listeners
+        const unsubscribeTrip = onSnapshot(dataRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                console.log("Received remote trip data update");
+                const data = docSnapshot.data();
+                setTripData(data);
+                localStorage.setItem('tripData_v3', JSON.stringify(data));
+            }
+        }, (error) => {
+            console.error("Trip Data Sync Error:", error);
+        });
+
+        const unsubscribeSettings = onSnapshot(settingsRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                console.log("Received remote settings update");
+                const data = docSnapshot.data();
+                setSettings(data);
+                localStorage.setItem('settings_v3', JSON.stringify(data));
+            }
+        }, (error) => {
+            console.error("Settings Sync Error:", error);
+        });
+
         setIsLoading(false);
+
+        return () => {
+            unsubscribeAuth();
+            unsubscribeTrip();
+            unsubscribeSettings();
+        };
     }, []);
 
     const saveData = useCallback((data) => {
@@ -1464,10 +1507,12 @@ const App = () => {
         // 保存到 localStorage
         localStorage.setItem('tripData_v3', JSON.stringify(data));
         // 如果啟用 Firebase 也保存到雲端
-        if (firebaseEnabled && user && dataRef) {
-            setDoc(dataRef, data, { merge: true });
+        if (firebaseEnabled && dataRef) {
+            // Note: We don't strictly need 'user' here if rules allow public write, 
+            // but it's good practice. For now, we write if firebase is enabled.
+            setDoc(dataRef, data, { merge: true }).catch(e => console.error("Save Error:", e));
         }
-    }, [user, dataRef]);
+    }, [dataRef]);
 
     const handleEditActivity = useCallback((dayIndex, updatedActivity) => {
         const newDays = tripData.days.map(day => {
@@ -1730,7 +1775,10 @@ const App = () => {
     const handleUpdateSettings = useCallback((newSettings) => {
         setSettings(newSettings);
         localStorage.setItem('settings_v3', JSON.stringify(newSettings));
-    }, []);
+        if (firebaseEnabled && settingsRef) {
+            setDoc(settingsRef, newSettings, { merge: true }).catch(e => console.error("Settings Save Error:", e));
+        }
+    }, [settingsRef]);
 
     const selectedDay = useMemo(() => {
         const day = tripData.days.find(d => d.index === selectedDayIndex);
