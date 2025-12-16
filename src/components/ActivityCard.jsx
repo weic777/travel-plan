@@ -88,7 +88,11 @@ const ActivityCard = ({ activity, dayIndex, onEdit, onDelete, onAddExpense, onEd
                         </div>
                         <div className="flex gap-1">
                             <a
-                                href={getGoogleMapsLink(activity.location)}
+                                href={getGoogleMapsLink(
+                                    activity.type === 'transport'
+                                        ? (activity.location.split(/->|→|↔/)[0].trim())
+                                        : activity.location
+                                )}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`p-1.5 rounded-lg ${Colors.BTN_GHOST}`}
@@ -108,7 +112,7 @@ const ActivityCard = ({ activity, dayIndex, onEdit, onDelete, onAddExpense, onEd
                     <p className={`text-sm ${Colors.TEXT_MUTED} mb-2`}>{activity.location}</p>
 
                     {activity.note && (
-                        <p className={`text-sm ${Colors.TEXT_SECONDARY} mb-2`}>{activity.note}</p>
+                        <p className={`text-sm ${Colors.TEXT_SECONDARY} mb-2 whitespace-pre-line`}>{activity.note}</p>
                     )}
 
                     {activity.expenses && activity.expenses.length > 0 && (

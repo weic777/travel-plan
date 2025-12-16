@@ -59,11 +59,11 @@ try {
 const App = () => {
     // 從 localStorage 讀取或使用初始數據
     const [tripData, setTripData] = useState(() => {
-        const saved = localStorage.getItem('tripData_v5');
+        const saved = localStorage.getItem('tripData_v6');
         return saved ? JSON.parse(saved) : initialTripData;
     });
     const [settings, setSettings] = useState(() => {
-        const saved = localStorage.getItem('settings_v5');
+        const saved = localStorage.getItem('settings_v6');
         return saved ? { ...initialSettings, ...JSON.parse(saved) } : initialSettings;
     });
     const [isLoading, setIsLoading] = useState(true);
@@ -89,8 +89,8 @@ const App = () => {
     const [authError, setAuthError] = useState(null);
     const [dbError, setDbError] = useState(null);
 
-    const dataRef = firebaseEnabled ? doc(db, 'trips', 'vienna-2026-v2') : null;
-    const settingsRef = firebaseEnabled ? doc(db, 'trips', 'settings-vienna-2026-v2') : null;
+    const dataRef = firebaseEnabled ? doc(db, 'trips', 'vienna-2026-v3') : null;
+    const settingsRef = firebaseEnabled ? doc(db, 'trips', 'settings-vienna-2026-v3') : null;
 
     useEffect(() => {
         if (!firebaseEnabled) {
@@ -131,7 +131,7 @@ const App = () => {
                     }
                     return prev;
                 });
-                localStorage.setItem('tripData_v5', JSON.stringify(data));
+                localStorage.setItem('tripData_v6', JSON.stringify(data));
             } else {
                 console.log("Initializing remote trip data...");
                 // If remote doesn't exist, upload our local initial data
@@ -150,7 +150,7 @@ const App = () => {
                 console.log("Received remote settings update");
                 const data = docSnapshot.data();
                 setSettings(data);
-                localStorage.setItem('settings_v5', JSON.stringify(data));
+                localStorage.setItem('settings_v6', JSON.stringify(data));
             } else {
                 console.log("Initializing remote settings...");
                 setDoc(settingsRef, initialSettings).catch(err => console.error("Error initializing remote settings:", err));

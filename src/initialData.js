@@ -54,7 +54,7 @@ export const initialTripData = {
                     time: '07:30',
                     description: '搭乘 RJX 火車前往中央車站',
                     type: 'transport',
-                    location: 'VIE Airport -> Central Station',
+                    location: 'VIE Airport -> Wien Hbf',
                     note: '📝 ToDo： 抵達中央車站時，領取/確認機場往返市區的實體票券。',
                     expenses: [
                         { id: 'e_d2_1', amount: 4872, currency: 'TWD', category: '交通', description: 'RJX 火車 (來回票)', payer: '哥哥' }
@@ -117,7 +117,7 @@ export const initialTripData = {
                     time: '07:28',
                     description: '維也納 → 哈修塔特',
                     type: 'transport',
-                    location: 'Vienna -> Hallstatt',
+                    location: 'Wien Hbf -> Hallstatt Bahnhof',
                     note: 'ÖBB 火車，需於 Linz 轉車。',
                     expenses: [
                         { id: 'e_d3_1', amount: 7413, currency: 'TWD', category: '交通', description: 'ÖBB 火車', payer: '哥哥' }
@@ -162,7 +162,7 @@ export const initialTripData = {
                     time: '11:32',
                     description: '哈修塔特 → 薩爾茲堡',
                     type: 'transport',
-                    location: 'Hallstatt -> Salzburg',
+                    location: 'Hallstatt Bahnhof -> Salzburg Hbf',
                     note: 'ÖBB 火車，需於 Attnang-Puchheim 轉車。',
                     expenses: [
                         { id: 'e_d4_1', amount: 2794, currency: 'TWD', category: '交通', description: 'ÖBB 火車', payer: '哥哥' }
@@ -207,7 +207,7 @@ export const initialTripData = {
                     time: '11:00',
                     description: '薩爾茲堡 → CK 小鎮',
                     type: 'transport',
-                    location: 'Salzburg -> Český Krumlov',
+                    location: 'Salzburg Hbf -> Český Krumlov',
                     note: 'CK Shuttle 私人接駁。',
                     expenses: [
                         { id: 'e_d5_1', amount: 11867, currency: 'TWD', category: '交通', description: 'CK Shuttle', payer: '哥哥' }
@@ -261,7 +261,7 @@ export const initialTripData = {
                     time: '13:00',
                     description: 'CK 小鎮 → 布拉格',
                     type: 'transport',
-                    location: 'CK -> Prague',
+                    location: 'Český Krumlov -> Praha hl.n.',
                     note: 'CK Shuttle 私人接駁。',
                     expenses: [
                         { id: 'e_d6_1', amount: 10816, currency: 'TWD', category: '交通', description: 'CK Shuttle', payer: '哥哥' }
@@ -340,7 +340,7 @@ export const initialTripData = {
                     time: '08:20',
                     description: '布拉格 ↔ 卡羅維瓦利 (KV)',
                     type: 'transport',
-                    location: 'Prague <-> Karlovy Vary',
+                    location: 'Praha ÚAN Florenc <-> Karlovy Vary',
                     note: 'FlixBus 來回。',
                     expenses: [
                         { id: 'e_d8_1', amount: 5185, currency: 'TWD', category: '交通', description: 'FlixBus 來回', payer: '哥哥' }
@@ -376,7 +376,7 @@ export const initialTripData = {
                     time: '12:37',
                     description: '布拉格 → 維也納',
                     type: 'transport',
-                    location: 'Prague -> Vienna',
+                    location: 'Praha hl.n. -> Wien Hbf',
                     note: 'ÖBB 直達火車。',
                     expenses: [
                         { id: 'e_d9_1', amount: 8435, currency: 'TWD', category: '交通', description: 'ÖBB 直達火車', payer: '哥哥' }
@@ -421,7 +421,7 @@ export const initialTripData = {
                     time: '08:00',
                     description: '辦理退房 / 前往機場',
                     type: 'transport',
-                    location: 'Hotel -> VIE Airport',
+                    location: 'Wien Hbf -> VIE Airport',
                     note: '搭乘 RJX 前往機場 (費用已含在首日買的來回票中)。',
                     expenses: []
                 },
