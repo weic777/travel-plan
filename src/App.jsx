@@ -68,7 +68,7 @@ const DualClock = () => {
 };
 
 // --- FLIGHT HEADER ---
-const FlightHeader = ({ flightInfo, syncStatus }) => {
+const FlightHeader = ({ flightInfo, syncStatus, onOpenStatus }) => {
     return (
         <div className={`sticky top-0 z-30 ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW}`}>
             <div className="max-w-6xl mx-auto px-4 py-3">
@@ -77,9 +77,13 @@ const FlightHeader = ({ flightInfo, syncStatus }) => {
                         <PlaneIcon className="w-5 h-5" />
                         維也納之旅
                         {syncStatus && (
-                            <span className={`flex h-2 w-2 rounded-full ${syncStatus === 'connected' ? 'bg-emerald-500' :
-                                    syncStatus === 'error' ? 'bg-rose-500' : 'bg-amber-500'
-                                }`} title={syncStatus === 'connected' ? '已連線' : '連線異常'}></span>
+                            <button
+                                onClick={onOpenStatus}
+                                className={`flex h-2 w-2 rounded-full cursor-pointer transition-transform hover:scale-150 ${syncStatus === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
+                                    syncStatus === 'error' ? 'bg-rose-500 animate-pulse' : 'bg-amber-500 animate-pulse'
+                                    }`}
+                                title={syncStatus === 'connected' ? '已連線 (點擊查看詳情)' : '連線異常 (點擊查看詳情)'}
+                            ></button>
                         )}
                     </h1>
                     <DualClock />
@@ -103,6 +107,71 @@ const FlightHeader = ({ flightInfo, syncStatus }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+// --- SYNC STATUS MODAL ---
+const SyncStatusModal = ({ isOpen, onClose, syncStatus, lastSyncTime, authUser, authError, dbError, firebaseEnabled }) => {
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="系統連線狀態診斷">
+            <div className="space-y-4">
+                <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4`}>
+                    <h4 className={`text-sm font-bold ${Colors.TEXT_MUTED} mb-2 uppercase tracking-wider`}>Firebase 設定</h4>
+                    <div className="flex justify-between items-center mb-1">
+                        <span className={Colors.TEXT_PRIMARY}>初始化狀態:</span>
+                        <span className={firebaseEnabled ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                            {firebaseEnabled ? "成功 (Initialized)" : "失敗 (Failed)"}
+                        </span>
+                    </div>
+                </div>
+
+                <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4`}>
+                    <h4 className={`text-sm font-bold ${Colors.TEXT_MUTED} mb-2 uppercase tracking-wider`}>認證狀態 (Auth)</h4>
+                    <div className="space-y-1">
+                        <div className="flex justify-between">
+                            <span className={Colors.TEXT_PRIMARY}>登入用戶:</span>
+                            <span className="text-slate-300 font-mono text-xs">{authUser ? authUser.uid.slice(0, 8) + '...' : '未登入'}</span>
+                        </div>
+                        {authError && (
+                            <div className="mt-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded text-rose-400 text-xs break-all">
+                                {authError}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-xl p-4`}>
+                    <h4 className={`text-sm font-bold ${Colors.TEXT_MUTED} mb-2 uppercase tracking-wider`}>資料庫連線 (Firestore)</h4>
+                    <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                            <span className={Colors.TEXT_PRIMARY}>連線狀態:</span>
+                            <span className={`font-bold ${syncStatus === 'connected' ? 'text-emerald-400' :
+                                syncStatus === 'error' ? 'text-rose-400' : 'text-amber-400'
+                                }`}>
+                                {syncStatus === 'connected' ? '已連線 (Connected)' :
+                                    syncStatus === 'error' ? '錯誤 (Error)' : '連線中 (Connecting...)'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className={Colors.TEXT_PRIMARY}>最後同步:</span>
+                            <span className="text-slate-300 text-xs">
+                                {lastSyncTime ? lastSyncTime.toLocaleTimeString() : '尚未同步'}
+                            </span>
+                        </div>
+                        {dbError && (
+                            <div className="mt-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded text-rose-400 text-xs break-all">
+                                {dbError}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="text-xs text-slate-500 text-center">
+                    <p>若顯示 Permission Denied，請檢查 Firebase Console 的 Rules。</p>
+                    <p>若顯示 Network Error，請檢查網路連線。</p>
+                </div>
+            </div>
+        </Modal>
     );
 };
 
@@ -1453,9 +1522,12 @@ const App = () => {
     const [currentActivityId, setCurrentActivityId] = useState(null);
     const [currentShoppingItem, setCurrentShoppingItem] = useState(null);
     const [isIndependentExpense, setIsIndependentExpense] = useState(false);
+    const [syncStatusModalOpen, setSyncStatusModalOpen] = useState(false);
 
     const [syncStatus, setSyncStatus] = useState('init'); // init, connected, error
     const [lastSyncTime, setLastSyncTime] = useState(null);
+    const [authError, setAuthError] = useState(null);
+    const [dbError, setDbError] = useState(null);
 
     const dataRef = firebaseEnabled ? doc(db, 'trips', 'vienna-2026') : null;
     const settingsRef = firebaseEnabled ? doc(db, 'trips', 'settings-vienna-2026') : null;
@@ -1472,11 +1544,15 @@ const App = () => {
             setUser(u);
             if (u) {
                 console.log("User authenticated:", u.uid);
+                setAuthError(null);
+            } else {
+                setAuthError("User not logged in");
             }
         });
 
         signInAnonymously(auth).catch((error) => {
             console.error("Auth Error:", error);
+            setAuthError(error.message);
             setSyncStatus('error');
         });
 
@@ -1484,6 +1560,7 @@ const App = () => {
         const unsubscribeTrip = onSnapshot(dataRef, (docSnapshot) => {
             setSyncStatus('connected');
             setLastSyncTime(new Date());
+            setDbError(null);
             if (docSnapshot.exists()) {
                 console.log("Received remote trip data update");
                 const data = docSnapshot.data();
@@ -1498,6 +1575,7 @@ const App = () => {
             }
         }, (error) => {
             console.error("Trip Data Sync Error:", error);
+            setDbError(error.message);
             setSyncStatus('error');
         });
 
@@ -1510,7 +1588,8 @@ const App = () => {
             }
         }, (error) => {
             console.error("Settings Sync Error:", error);
-            setSyncStatus('error');
+            // Don't override main sync status for settings error alone, but log it
+            setDbError(prev => prev || error.message);
         });
 
         setIsLoading(false);
@@ -1530,7 +1609,11 @@ const App = () => {
         if (firebaseEnabled && dataRef) {
             // Note: We don't strictly need 'user' here if rules allow public write, 
             // but it's good practice. For now, we write if firebase is enabled.
-            setDoc(dataRef, data, { merge: true }).catch(e => console.error("Save Error:", e));
+            setDoc(dataRef, data, { merge: true }).catch(e => {
+                console.error("Save Error:", e);
+                setDbError("Save failed: " + e.message);
+                setSyncStatus('error');
+            });
         }
     }, [dataRef]);
 
@@ -1947,7 +2030,18 @@ const App = () => {
 
     return (
         <div className={`min-h-screen ${Colors.BG_CANVAS}`}>
-            <FlightHeader flightInfo={tripData.flightInfo} syncStatus={syncStatus} />
+            <FlightHeader flightInfo={tripData.flightInfo} syncStatus={syncStatus} onOpenStatus={() => setSyncStatusModalOpen(true)} />
+
+            <SyncStatusModal
+                isOpen={syncStatusModalOpen}
+                onClose={() => setSyncStatusModalOpen(false)}
+                syncStatus={syncStatus}
+                lastSyncTime={lastSyncTime}
+                authUser={user}
+                authError={authError}
+                dbError={dbError}
+                firebaseEnabled={firebaseEnabled}
+            />
 
             {renderContent()}
 
