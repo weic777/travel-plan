@@ -3,7 +3,7 @@ import { Colors } from '../UtilsAndComponents';
 
 const DaySelector = ({ days, selectedDayIndex, onSelectDay }) => {
     return (
-        <div className={`sticky top-0 z-20 ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW} touch-pan-x`}>
+        <div className={`sticky top-[53px] z-20 ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW} touch-pan-x`}>
             <div className="max-w-6xl mx-auto px-2 py-3 overflow-x-auto scrollbar-hide">
                 <div className="flex gap-3 min-w-max">
                     {days.map((day) => {

@@ -72,48 +72,57 @@ const FlightHeader = ({ flightInfo, syncStatus, onOpenStatus, onUpdateFlight }) 
     };
 
     return (
-        <div className={`relative ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW}`}>
-            <div className="max-w-6xl mx-auto px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
-                    <h1 className={`text-lg font-bold ${Colors.TEXT_PRIMARY} flex items-center gap-2`}>
-                        <PlaneIcon className="w-5 h-5" />
-                        維也納之旅
-                        {syncStatus && (
-                            <button
-                                onClick={onOpenStatus}
-                                className={`flex h-2 w-2 rounded-full cursor-pointer transition-transform hover:scale-150 ${syncStatus === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
-                                    syncStatus === 'error' ? 'bg-rose-500 animate-pulse' : 'bg-amber-500 animate-pulse'
-                                    }`}
-                                title={syncStatus === 'connected' ? '已連線 (點擊查看詳情)' : '連線異常 (點擊查看詳情)'}
-                            ></button>
-                        )}
-                    </h1>
-                    <DualClock />
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-lg p-2`}>
-                        <div className={`${Colors.TEXT_MUTED} mb-0.5 flex items-center gap-1`}>
-                            <PlaneIcon className="w-3 h-3" /> 去程 ({flightInfo?.outbound?.airline} {flightInfo?.outbound?.flightNumber})
-                        </div>
-                        {renderEditableField('outbound', 'time', flightInfo?.outbound?.departure?.time, `${Colors.TEXT_PRIMARY} font-semibold`)}
-                        <div className={Colors.TEXT_SECONDARY}>
-                            {flightInfo?.outbound?.departure?.code} → {flightInfo?.outbound?.arrival?.code}
-                        </div>
-                        {renderEditableField('outbound', 'note', flightInfo?.outbound?.note, `${Colors.TEXT_MUTED} mt-1 text-[10px] italic`)}
-                    </div>
-                    <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-lg p-2`}>
-                        <div className={`${Colors.TEXT_MUTED} mb-0.5 flex items-center gap-1`}>
-                            <PlaneIcon className="w-3 h-3" /> 回程 ({flightInfo?.inbound?.airline} {flightInfo?.inbound?.flightNumber})
-                        </div>
-                        {renderEditableField('inbound', 'time', flightInfo?.inbound?.departure?.time, `${Colors.TEXT_PRIMARY} font-semibold`)}
-                        <div className={Colors.TEXT_SECONDARY}>
-                            {flightInfo?.inbound?.departure?.code} → {flightInfo?.inbound?.arrival?.code}
-                        </div>
-                        {renderEditableField('inbound', 'note', flightInfo?.inbound?.note, `${Colors.TEXT_MUTED} mt-1 text-[10px] italic`)}
+        <>
+            {/* Sticky Header: Title & Time */}
+            <div className={`sticky top-0 z-40 ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW}`}>
+                <div className="max-w-6xl mx-auto px-4 py-3">
+                    <div className="flex items-center justify-between">
+                        <h1 className={`text-lg font-bold ${Colors.TEXT_PRIMARY} flex items-center gap-2`}>
+                            <PlaneIcon className="w-5 h-5" />
+                            維也納之旅
+                            {syncStatus && (
+                                <button
+                                    onClick={onOpenStatus}
+                                    className={`flex h-2 w-2 rounded-full cursor-pointer transition-transform hover:scale-150 ${syncStatus === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
+                                        syncStatus === 'error' ? 'bg-rose-500 animate-pulse' : 'bg-amber-500 animate-pulse'
+                                        }`}
+                                    title={syncStatus === 'connected' ? '已連線 (點擊查看詳情)' : '連線異常 (點擊查看詳情)'}
+                                ></button>
+                            )}
+                        </h1>
+                        <DualClock />
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Scrollable Flight Info */}
+            <div className={`relative ${Colors.GLASS_BG} ${Colors.GLASS_BORDER} border-b ${Colors.GLASS_SHADOW}`}>
+                <div className="max-w-6xl mx-auto px-4 py-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-lg p-2`}>
+                            <div className={`${Colors.TEXT_MUTED} mb-0.5 flex items-center gap-1`}>
+                                <PlaneIcon className="w-3 h-3" /> 去程 ({flightInfo?.outbound?.airline} {flightInfo?.outbound?.flightNumber})
+                            </div>
+                            {renderEditableField('outbound', 'time', flightInfo?.outbound?.departure?.time, `${Colors.TEXT_PRIMARY} font-semibold`)}
+                            <div className={Colors.TEXT_SECONDARY}>
+                                {flightInfo?.outbound?.departure?.code} → {flightInfo?.outbound?.arrival?.code}
+                            </div>
+                            {renderEditableField('outbound', 'note', flightInfo?.outbound?.note, `${Colors.TEXT_MUTED} mt-1 text-[10px] italic`)}
+                        </div>
+                        <div className={`${Colors.GLASS_BG} ${Colors.GLASS_BORDER} rounded-lg p-2`}>
+                            <div className={`${Colors.TEXT_MUTED} mb-0.5 flex items-center gap-1`}>
+                                <PlaneIcon className="w-3 h-3" /> 回程 ({flightInfo?.inbound?.airline} {flightInfo?.inbound?.flightNumber})
+                            </div>
+                            {renderEditableField('inbound', 'time', flightInfo?.inbound?.departure?.time, `${Colors.TEXT_PRIMARY} font-semibold`)}
+                            <div className={Colors.TEXT_SECONDARY}>
+                                {flightInfo?.inbound?.departure?.code} → {flightInfo?.inbound?.arrival?.code}
+                            </div>
+                            {renderEditableField('inbound', 'note', flightInfo?.inbound?.note, `${Colors.TEXT_MUTED} mt-1 text-[10px] italic`)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
     );
 };
 
